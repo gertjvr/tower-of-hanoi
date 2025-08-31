@@ -205,6 +205,7 @@ export default function App() {
         selectedPeg={selectedPeg}
         onPegClick={handlePegClick}
         diskCount={diskCount}
+        hint={hint}
       />
 
       {completed && (
@@ -232,7 +233,7 @@ export default function App() {
   )
 }
 
-function GameBoard({ piles, selectedPeg, onPegClick, diskCount }) {
+function GameBoard({ piles, selectedPeg, onPegClick, diskCount, hint }) {
   return (
     <div className="board">
       {piles.map((pile, idx) => (
