@@ -7,6 +7,7 @@ Overview
 - Undo: single-step undo of the last move
 - Confetti celebration on completion
 - Hint button: highlights a legal move (auto-clears after 5s)
+- Timer: shows elapsed time per level and persists across refresh
 - Suitable for Cloudflare Pages static hosting
 
 Local Development
@@ -30,6 +31,7 @@ Persistence
 - State is saved under the `hanoi-v1` key in `localStorage`
 - Saved: current disk count, piles, move count, completion flag
 - Also saved: last-move history stack for Undo
+- Timer persistence: stores `startedAt` and `stoppedAt` timestamps
 
 Accessibility
 - Pegs are focusable buttons with clear labels

@@ -18,6 +18,9 @@ export default function App() {
   const [showConfetti, setShowConfetti] = useState(false)
   const [history, setHistory] = useState([]) // single-step undo stack
   const [hint, setHint] = useState(null) // { from, to } | null
+  const [startedAt, setStartedAt] = useState(Date.now())
+  const [stoppedAt, setStoppedAt] = useState(null)
+  const [now, setNow] = useState(Date.now())
 
   // Load from localStorage once on mount
   useEffect(() => {
@@ -28,13 +31,15 @@ export default function App() {
       setMoves(saved.moves)
       setCompleted(saved.completed)
       setHistory(Array.isArray(saved.history) ? saved.history : [])
+      setStartedAt(typeof saved.startedAt === 'number' ? saved.startedAt : Date.now())
+      setStoppedAt(saved.stoppedAt === null || typeof saved.stoppedAt === 'number' ? saved.stoppedAt : null)
     }
   }, [])
 
   // Persist on changes
   useEffect(() => {
-    saveState({ diskCount, piles, moves, completed, history })
-  }, [diskCount, piles, moves, completed, history])
+    saveState({ diskCount, piles, moves, completed, history, startedAt, stoppedAt })
+  }, [diskCount, piles, moves, completed, history, startedAt, stoppedAt])
 
   const minMoves = useMemo(() => (1 << diskCount) - 1, [diskCount])
 
@@ -44,6 +49,13 @@ export default function App() {
       const t = setTimeout(() => setShowConfetti(false), 2800)
       return () => clearTimeout(t)
     }
+  }, [completed])
+
+  // Tick timer once per second while not completed
+  useEffect(() => {
+    if (completed) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
   }, [completed])
 
   // Auto-clear hint after a short time
@@ -86,6 +98,7 @@ export default function App() {
       // Win condition: all disks on last peg
       if (newPiles[2].length === diskCount) {
         setCompleted(true)
+        setStoppedAt(Date.now())
       }
     } else {
       // illegal move -> switch selection to target if it has disks, else keep original
@@ -101,6 +114,8 @@ export default function App() {
     setSelectedPeg(null)
     setCompleted(false)
     setHistory([])
+    setStartedAt(Date.now())
+    setStoppedAt(null)
   }
 
   function nextLevel() {
@@ -131,6 +146,7 @@ export default function App() {
     setPiles(newPiles)
     setMoves((m) => Math.max(0, m - 1))
     setCompleted(false)
+    setStoppedAt(null)
     setSelectedPeg(null)
     setHistory((h) => h.slice(0, -1))
   }
@@ -191,6 +207,7 @@ export default function App() {
           <span><strong>Level:</strong> {diskCount} disks</span>
           <span><strong>Moves:</strong> {moves}</span>
           <span><strong>Best possible:</strong> {minMoves}</span>
+          <span><strong>Time:</strong> {formatDuration(Math.max(0, (stoppedAt ?? now) - (startedAt || now)))}</span>
         </div>
         <div className="actions">
           <button className="btn" onClick={requestHint} disabled={completed} title="Show a helpful move">Hint</button>
@@ -213,7 +230,7 @@ export default function App() {
           {showConfetti && <Confetti />}
           <div className="modal">
             <h2>Great job!</h2>
-            <p>You solved it in {moves} moves.</p>
+            <p>You solved it in {moves} moves and {formatDuration(Math.max(0, (stoppedAt ?? now) - (startedAt || now)))}.</p>
             <div className="modal-actions">
               {diskCount < MAX_DISKS ? (
                 <button className="btn primary" onClick={nextLevel}>Next Level ({diskCount + 1} disks)</button>
@@ -279,4 +296,11 @@ function Disk({ size, max }) {
       }}
     />
   )
+}
+
+function formatDuration(ms) {
+  const totalSec = Math.floor(ms / 1000)
+  const m = Math.floor(totalSec / 60)
+  const s = totalSec % 60
+  return `${m}:${String(s).padStart(2, '0')}`
 }

@@ -38,5 +38,8 @@ function validateState(s) {
       if (h.from < 0 || h.from > 2 || h.to < 0 || h.to > 2) return false;
     }
   }
+  // timer fields optional
+  if (s.startedAt !== undefined && typeof s.startedAt !== 'number') return false;
+  if (s.stoppedAt !== undefined && s.stoppedAt !== null && typeof s.stoppedAt !== 'number') return false;
   return true;
 }
